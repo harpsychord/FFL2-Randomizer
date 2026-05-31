@@ -1,10 +1,10 @@
 # Final Fantasy Legend 2 Randomizer
 
 ## Features:
-- Treasure shuffle.
-- Magi shuffle.
-- Shop shuffle.
-- Starting monsters randomized.
+- Treasure shuffle/rando.
+- Magi shuffle/rando.
+- Shop rando.
+- Starting monsters rando.
 - World shuffle.
 - QoL Features:
   - Empty chests will appear open.
@@ -24,9 +24,9 @@
     - Mutant stat growth behaves as expected.
     - Dooring/Pegasus/Teleporting during the race will now force a dismount.
 
-## Version 3.0.0 (4/19/2026):
-- Website now available for ROM generation: https://www.ffl2r.com/
-- Fixed a bug where shuffling worlds would also set the game as open world. 
+## Version 3.1.0 (5/31/2026):
+- Adjustable treasure randomization added.
+- Fixed an issue where talking to Leon in Exiled Town would graphically glitch the player.
 
 ## How to:
 - Download the Python scripts (and install Python if you don't have it).
