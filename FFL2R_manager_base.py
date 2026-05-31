@@ -169,11 +169,8 @@ class GamePrep:
         scripts.menu[1][3]=0x0d
         for x in GameData.noMemoCalls:
             scripts.replaceScript(3, x, '00')
-        c1 = scripts.findScriptByBytes('18')
-        c2 = [x for x in c1 if x[0] == 0 and scripts.main[x[1]][x[2]-1] not in range(0x00, 0x3c)]
-        c2.reverse()
-        for x in c2:
-            scripts.removeFromScript(0, x[1], x[2], x[2]+2)
+        for x in GameData.memoSets:
+            scripts.removeFromScript(0, x[0], x[1], x[1]+2)
 
     def kiShrineCleanup(scripts:ScriptManager, maps:MapManager):
         scripts.addNewScript(0, 'ba e6 e6 5f e7 59 e7 f5 8c 61 d4 76 06 e6 81 85 70 6b 7e 66 6f 55 f3 00')
@@ -263,7 +260,7 @@ class GamePrep:
                                                 ec 50 56 da f3 f3 00""")
         scripts.replaceScript(0, 91, '19 05 b5 19 f0 12 19 07 0b 36 03 cc d8 4e ea d8 67 5e 87 db 06 36 03 9e ff cd e5 e8 4e be ec 4e f3 f3 00')
         #0x15 not used?
-        maps.map[65].npcs[2] = bytearray.fromhex('80 15 20 d9 0a fa')
+        maps.map[65].npcs[2] = bytearray.fromhex('80 26 20 d9 0a fa')
         scripts.replaceScript(0, 86, '00')
 
     def venusWorldCleanup(scripts:ScriptManager, maps:MapManager):
@@ -289,14 +286,46 @@ class GamePrep:
     def dadDeathCutscenes(scripts:ScriptManager):
         scripts.insertIntoScript(0, 390, 34, '15 04 55')
         scripts.insertIntoScript(0, 390, 40, '31')
-        scripts.replaceScript(3, 244, scripts.main[408].hex(" "))
-        scripts.removeFromScript(0, 372, 211, 218)
-        scripts.insertIntoScript(0, 372, 0, '10')
-        scripts.insertIntoScriptAtEnd(3, 244, scripts.main[372].hex(" "))
-        scripts.removeFromScript(3, 244, len(scripts.memo[244])-5, len(scripts.memo[244]))
-        scripts.insertIntoScriptAtEnd(0, 371, '14 0e 07 12 10 19 05 ed 0d 15 05 00 14 04 00 00 15 05 11 14 04 01 00 15 05 33 14 04 01 00 00')
-        scripts.insertIntoScriptAtEnd(3, 244, scripts.main[371].hex(" "))
-        #+ 
+        scripts.replaceScript(3, 244, """19 07 04 c6 65 78 53 f5 c1 d8 67 e2 f3 06 ff d2 55 68 d7 d4 e8 da db 7f 68 59 d7 8c 5e 53 4e 
+                                         ea d4 87 56 da 06 7e 66 6f 55 f3 06 c5 ec e1 e1 f5 c1 d8 df e3 64 d8 ef ff cc dc e5 f3 20 1f 
+                                         00 f5 f1 cc dc e5 f3 f4 06 c5 ec e1 e1 f5 c6 72 bd d4 d7 d7 72 5f 06 64 5f e6 56 da f1 f1 ff 
+                                         cc e2 06 ff bc d4 e3 e7 d4 56 63 d4 dc 57 51 ee d7 74 4e e0 72 d9 60 51 68 e7 dc 67 9c 81 e0 
+                                         ec 77 58 67 5e d8 67 f0 20 1f 05 f5 c8 db f1 f1 06 c6 65 78 53 f5 d0 6a 54 d4 f1 f1 06 ff d2 
+                                         55 7e e2 e2 98 57 6c f4 f3 06 ff f1 ff d0 d8 67 f3 06 ff d2 55 7a 59 90 d8 76 e5 06 83 5b 87 
+                                         58 da d4 56 f3 f3 06 19 f6 03 01 ff c5 ec e1 e1 f5 c1 be c5 c9 f3 0b 0d bf 60 51 e5 f5 c5 ec 
+                                         e1 e1 f3 f3 06 ff 20 1f 05 f3 8c ee 67 62 85 06 4f 51 64 65 78 53 f0 06 ff d2 55 62 5b da 85 
+                                         ff c5 ec e1 e1 06 58 7c ff e5 e8 e1 f3 0b 0d 14 00 00 12 07 10 bf 60 51 e5 f5 cd d4 de 4e 50 
+                                         5f f3 06 19 0a 00 06 ff 20 1f 05 ef 4f d8 67 9c 81 06 4f 6a 54 79 9d 76 61 53 f0 06 20 1f 05 
+                                         f5 d0 6a e7 f4 ff bd d4 d7 f3 f4 06 ff f1 f1 ff bd d4 d7 f3 f3 0b 0d 19 f6 21 00 ff 19 f0 01 
+                                         ff 12 07 10 19 07 a8 11 30 19 07 81 19 f6 20 00 ff 19 f6 02 00 ff 12 07 10 11 10 19 07 10 c5 
+                                         ec e1 e1 f5 c8 db 90 e2 f1 f3 06 ff c1 4e d7 dc d7 e1 ee 54 6a 76 4f e2 83 5b 50 60 7e 66 64 
+                                         d8 f1 f3 06 8c ee e0 63 66 e5 ec ef ff 20 1f 05 f1 06 19 f1 03 ff 20 1f 05 f5 c2 e7 77 90 e2 
+                                         e7 06 6f 55 68 d9 d4 e8 df e7 ef ff c5 ec e1 e1 f0 8c 5e 89 63 5b 6a e5 93 06 4f 5b 70 e0 f1 
+                                         f1 bb 86 5c e7 06 5e 89 58 64 5f e7 d4 de 4e 59 d7 ff bd d4 d7 f1 f1 58 7c ff f1 06 ff f1 f1 
+                                         06 20 1f 08 f5 20 1f 05 f3 06 ff bd 65 ee 54 95 ff e8 e3 80 e7 f0 06 ff d0 4e 6a 76 4f 5b e7 
+                                         d4 de d8 06 ff c5 ec e1 73 db 81 d8 ef ff e5 dc da db e7 f4 20 1f 06 f5 c8 de d4 ec ef ff c5 
+                                         ec e1 e1 f0 06 ff c5 85 77 62 5b db 81 d8 f0 06 c5 ec e1 e1 f5 f1 ff f1 e6 e2 d5 f1 63 e2 d5 
+                                         f1 06 ff f1 ff f1 6f 75 db ff f1 06 14 00 07 12 07 10 19 00 0f 0d 11 30 19 f0 12 19 f0 0c 12 
+                                         07 19 07 a8 10 19 f1 01 ff c9 51 ea f3 9c 59 f3 06 cc d4 72 71 e2 d7 f2 d5 ec 4e 5d 06 50 4e 
+                                         c7 e2 f0 b1 62 e8 72 8d 06 50 4e 20 21 ff ea e6 f3 06 c1 ba f3 ff c1 ba f3 ff c1 ba f3 ff c1 
+                                         ba f3 06 20 1f 05 f5 c8 db ff bd d4 d7 f3 ff c7 e2 f1 f3 06 ff c7 e2 f1 ff c7 c8 f3 06 ff bd 
+                                         65 ee 54 7f 67 64 d8 f1 06 ff f1 ff f1 d2 c8 ce 9c c8 c7 cc cd be cb f3 06 09 88 37 12 07 10 
+                                         3e 19 0a 09 0d 06 20 1f 07 f5 c5 85 77 62 5b 5d 06 ff c5 ec e1 e1 77 61 55 80 f3 0b 0d 14 04 
+                                         07 14 00 00 19 f0 10 19 07 8b 19 05 a5 14 0e 08 18 c8 10 c5 ec e1 e1 f5 99 59 de 6f 55 f1 ff 
+                                         f1 06 ff bb 86 f1 ff 20 1f 05 f1 8c ee e0 f1 06 20 1f 05 f5 99 60 77 69 de d4 ec f0 06 ff bd 
+                                         65 ee 54 ea 66 e5 ec f1 06 20 1f 06 f5 ba 5a 5e 4e 71 56 da 06 74 d4 d6 de ef ff 20 1f 05 f4 
+                                         0b 0d 20 1f 05 f5 c7 e2 f3 ff f1 f1 c7 e2 e7 06 8a dc de 4e 50 5f f0 06 8c 58 e0 62 60 51 e5 
+                                         56 da 06 4f 51 63 e7 60 e8 4e 8d 06 62 e2 d7 d7 d8 e6 e6 f1 f1 06 ff bf 66 64 72 bd d4 d7 ef 
+                                         4f e2 e2 f3 06 19 07 0c ff bc 59 ee 54 71 74 d4 d6 de 06 90 84 f1 f1 f3 f3 06 20 1f 08 f5 c8 
+                                         de d4 ec f3 06 ff c5 85 77 62 e2 ef 4f 51 e1 f3 f3 06 20 1f 07 f5 bb ec d8 ef ff c5 ec e1 e1 
+                                         f3 06 ff cd d4 de 4e 97 5a f3 f3 0b 0d c5 ec e1 e1 77 64 e2 50 53 f5 c8 db f3 06 ff 99 59 de 
+                                         6f 55 ff 76 e5 ec 06 ff 76 e5 72 e0 e8 d6 db f3 ff bc d4 e3 e7 d4 56 ff 8e 8f 4f e2 06 74 4e 
+                                         7b d9 e5 dc 8b 57 8d 06 64 72 db 8e d5 59 d7 f0 06 ff ba d9 7f 68 e0 72 db 8e d5 59 d7 06 62 
+                                         e2 54 9d 78 5c 73 50 d8 06 64 5f e6 dc 65 58 52 d4 06 ff 20 21 ff ea ef ff bc d4 e3 e7 d4 56 
+                                         06 4f 5a 60 8f ff c5 ec e1 73 89 06 58 ff 5a d4 96 d7 d4 e8 da db 7f e5 f0 06 ff f1 f1 79 6a 
+                                         76 4f 5b da dc 76 06 4f 70 52 d5 d4 d6 de 4f 5b 6d e8 f0 ff bc d4 e3 e7 d4 56 8a d8 d9 54 87 
+                                         06 61 53 d8 f0 0b 0d 19 0a 01 14 07 07 14 0e 07 12 10 19 05 ed 0d 15 05 00 14 04 00 00 15 05 
+                                         11 14 04 01 00 15 05 33 14 04 01 00 00 00 06""")
         scripts.replaceScript(0, 371, '00')
         scripts.replaceScript(0, 372, '00')
         scripts.replaceScript(0, 408, '4b f4 40 f4 00')
@@ -319,8 +348,7 @@ class GamePrep:
         maps.map[202].npcs[1] = bytearray.fromhex('1d 00 04 c6 5e f0')
         scripts.replaceScript(0, 94, '12 1d 12 10 12 11 10 13 11 19 0a 0c 14 18 0c 00')
 
-    def warMachAdjust(scripts:ScriptManager, maps:MapManager, treasureFlagReclaim:list):
-        treasureFlagReclaim.append(38)
+    def warMachAdjust(scripts:ScriptManager, maps:MapManager):
         maps.map[187].npcs[1] = bytearray.fromhex('0c 04 0c cc 47 f0')
         maps.addNPC(187, 0, '11 11 4c cc 03 f1')
         scripts.replaceScript(0, 71, '12 0c 12 11 10 13 11 19 0a 0b 00')

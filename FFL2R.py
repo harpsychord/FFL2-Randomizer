@@ -15,11 +15,11 @@ from FFL2R_manager_economy import GoldManager
 from FFL2R_manager_economy import ItemManager
 from FFL2R_manager_world import WorldManager
 
-VERSION = 3.0
+VERSION = 3.1
 DEBUG = False
 
 def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None, encounterRate:int|None, goldDrops:int|None, 
-         worldType:int|None)->tuple:
+         worldType:int|None, shuffleType:int|None)->tuple:
     if not fromWeb:
         if not rom_path:
             gameFile = str(input("First, please path to the FFL2 rom. \n>>"))
@@ -52,7 +52,21 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     if worldType < 1 or worldType > 3:
         raise Exception("Invalid World Order Selection.")
 
-    treasureFlagReclaim = []
+    if not shuffleType:
+        shuffleType = int(input("""Choose a treasure shuffle type:
+        1 = Shuffle Treasures, Shuffle Magi, Don't Mix
+        2 = Shuffle Treasures, Shuffle Magi, Mix
+        3 = Random Treasures, Shuffle Magi, Don't Mix
+        4 = Random Treasures, Shuffle Magi, Mix
+        5 = Shuffle Treasures, Random Magi, Don't Mix
+        6 = Shuffle Treasures, Random Magi, Mix
+        7 = Random Treasures, Random Magi, Don't Mix
+        8 = Random Treasures, Random Magi, Mix
+        >>"""))
+        
+    if shuffleType < 1 or worldType > 8:
+        raise Exception("Invalid Shuffle Selection.")
+
     FFL2R_asm.Fixes.missingTrigger(romData)
     FFL2R_asm.Fixes.magiFix(romData)
     FFL2R_asm.Fixes.mutantStr(romData)
@@ -71,12 +85,6 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     items = ItemManager(romData)
     worlds = WorldManager()
 
-    #print(scripts.main[193].hex(" "))
-
-    # print(f"item: {scripts.findScriptByBytes('19 09')}")
-    # print(f"magi: {scripts.findScriptByBytes('19 0a')}")
-    # print(f"item-force: {scripts.findScriptByBytes('19 0b')}")
-
     FFL2R_manager_base.ScriptedFixes.moveMrS(scripts, maps)
     FFL2R_manager_base.ScriptedFixes.fixTheRace(scripts, maps)
 
@@ -86,20 +94,18 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     FFL2R_manager_base.GamePrep.memoRemove(scripts, romData)
     FFL2R_manager_base.GamePrep.venusWorldCleanup(scripts, maps)
     FFL2R_manager_base.GamePrep.dadDeathCutscenes(scripts)
-    FFL2R_manager_base.GamePrep.warMachAdjust(scripts, maps, treasureFlagReclaim)
+    FFL2R_manager_base.GamePrep.warMachAdjust(scripts, maps)
     FFL2R_manager_base.GamePrep.nastyChest(scripts, maps)
     FFL2R_manager_base.GamePrep.guardianBaseLogic(maps)
     FFL2R_manager_base.GamePrep.betterPrism(scripts, romData)
     FFL2R_manager_base.GamePrep.newCredits(scripts)
+    FFL2R_manager_base.GamePrep.convertTrueEyeChest(scripts, maps)
 
     FFL2R_manager_base.ScriptedQOL.newNPCHelpers(scripts, maps)
 
-    magiShuffle(scripts, maps, GameData.MAGI)
-    treasureShuffle(maps, scripts, GameData.TREASURES, treasureFlagReclaim)
+    randomization(worlds, shuffleType, scripts, maps, romData)
     shopRando(shops, GameData.shopTiers)
     worldShuffle(romData, maps, scripts, worlds, worldType)
-
-    FFL2R_manager_base.GamePrep.convertTrueEyeChest(scripts, maps)
 
     newStarters(monsters, scripts)
 
@@ -113,22 +119,66 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     
     for k,v in GameData.newItemPrices.items():
          items.item[k].setPrice(v)
-    
+
+    # if DEBUG == True:
+    #     prismCounts = [0 for _ in range(16)]
+    #     for k,v in worlds.locations.items():
+    #         treasuretype = ""
+    #         treasurevalue = ""
+    #         if v.lType.value > 4:
+    #             if v.data[0] == 0:
+    #                 if scripts.main[v.data[1]][v.data[2]+1] == 0xa:
+    #                     treasuretype = "MAGI"
+    #                     treasurevalue = GameData.MAGIVALUES[scripts.main[v.data[1]][v.data[2]+2]]
+    #                     prismCounts[v.pType.value]+=1
+    #                 else:
+    #                     treasuretype = "Item"
+    #                     treasurevalue = GameData.ITEMS[scripts.main[v.data[1]][v.data[2]+2]]
+    #             else:
+    #                 treasuretype = ""
+    #                 treasurevalue = ""
+    #                 if scripts.memo[v.data[1]][v.data[2]+1] == 0xa:
+    #                     treasuretype = "MAGI"
+    #                     treasurevalue = GameData.MAGIVALUES[scripts.memo[v.data[1]][v.data[2]+2]]
+    #                     prismCounts[v.pType.value]+=1
+    #                 else:
+    #                     treasuretype = "Item"
+    #                     treasurevalue = GameData.ITEMS[scripts.memo[v.data[1]][v.data[2]+2]]
+    #         else:
+    #             if maps.map[v.data[0]].npcs[v.data[1]][5] == 0xfa:
+    #                 treasuretype = "MAGI"
+    #                 treasurevalue = GameData.MAGIVALUES[maps.map[v.data[0]].npcs[v.data[1]][4]]
+    #                 prismCounts[v.pType.value]+=1
+    #             else:
+    #                 treasuretype = "Item"
+    #                 treasurevalue = GameData.ITEMS[maps.map[v.data[0]].npcs[v.data[1]][4]]
+    #         if treasuretype == "MAGI":
+    #             print(f"{k} - {treasuretype}: {treasurevalue}")
+    #     print(f"{prismCounts} = Total: {sum(prismCounts) - 3}")
+
     romData = File.editRom(romData, scripts, maps, shops, monsters, gold, items)
 
-    mode = ""
+    worldMode = ""
     match worldType:
-        case 1:
-            mode = "Vanilla"
-        case 2:
-            mode = "Shuffled"
-        case 3:
-            mode = "Open"
+        case 1: worldMode = "Vanilla"
+        case 2: worldMode = "Shuffled"
+        case 3: worldMode = "Open"
+    shuffleMode = ""
+    match shuffleType:
+        case 1: shuffleMode = "Shuffle Treasures, Shuffle Magi, Don't Mix"
+        case 2: shuffleMode = "Shuffle Treasures, Shuffle Magi, Mix"
+        case 3: shuffleMode = "Random Treasures, Shuffle Magi, Don't Mix"
+        case 4: shuffleMode = "Random Treasures, Shuffle Magi, Mix"
+        case 5: shuffleMode = "Shuffle Treasures, Random Magi, Don't Mix"
+        case 6: shuffleMode = "Shuffle Treasures, Random Magi, Mix"
+        case 7: shuffleMode = "Random Treasures, Random Magi, Don't Mix"
+        case 8: shuffleMode = "Random Treasures, Random Magi, Mix"
     print(f"""        Final Fantasy Legend 2 Randomizer Settings:
         Seed is: {str(gameSeed)}
         Encounter rate adjustment is: {str(encounterRate)}%
         Gold adjustment is: {str(goldDrops)}%
-        World type is: {mode}""")
+        World type is: {worldMode}
+        Treasure Distribution is: {shuffleMode}""")
     if fromWeb == True:
         return romData, gameSeed
     else:
@@ -158,59 +208,152 @@ def encounterRateAdjustment(maps:MapManager, rate:int):
             if v.encounterRate == 0:
                 v.encounterRate = 1
 
-def treasureShuffle(maps:MapManager, scripts:ScriptManager, treasures:list, treasureFlagReclaim:list):
-    treasuresList = treasures
-    random.shuffle(treasuresList)
-    #0=treasures, 1=magi
-    treasureChests = maps.findNPCs(0)
-    for chest in treasureChests:
-        newChest = bytearray.fromhex(chest[2][0:12] + f"{treasuresList[0]:02x}" + chest[2][15:17])
-        if treasuresList[0] == 0xFF:
-            x, y = Utility.findCoordinate(int(chest[2][6:8], 16)), Utility.findCoordinate(int(chest[2][9:11], 16))
-            treasureFlagReclaim.append(chest[2][1])
-            newChest = bytearray.fromhex('00 0f ' + f"{x+0x40:02x}" + f"{y+0xc0:02x}" + '03 f1')
-        treasuresList.pop(0)
-        maps.map[chest[0]].npcs[chest[1]] = newChest
-    startGift = random.choice(list(GameData.ITEMS.keys()))
-    scripts.main[275][26] = startGift
-    scripts.main[275][41] = startGift
-
-def magiShuffle(scripts:ScriptManager, maps:MapManager, magi:list):
-    def _newMagi(scripts:ScriptManager, magiList:list, x:int, y:int):
-        scripts.main[x][y] = magiList[0]
-        magiList.pop(0)
-    magiList = magi
-    random.shuffle(magiList)
-    magiChests = maps.findNPCs(1)
-    raceMagi = []
-    leonsMagi = 0x00
-    for chest in magiChests:
-        newChest = bytearray.fromhex(chest[2][0:12] + f"{magiList[0]:02x}" + chest[2][15:17])
-        magiList.pop(0)
-        maps.map[chest[0]].npcs[chest[1]] = newChest
-    scriptList = scripts.findScriptByBytes('19 0a')
-    for script in scriptList:
-        if script[0] == 3:
-            scripts.memo[script[1]][script[2]+2] = magiList[0]
-            magiList.pop(0)
+def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, maps:MapManager, romData:mmap):
+    def _char2Parent(scripts:ScriptManager):
+        startGift = random.choice(list(GameData.ITEMS.keys()))
+        scripts.main[275][26] = startGift
+        scripts.main[275][41] = startGift
+    def _placeInChest(mapID:int, npcIndex:int, value:int, tType:int, maps:MapManager):
+        if tType == 1: #magi
+            maps.map[mapID].npcs[npcIndex][4] = value
+            maps.map[mapID].npcs[npcIndex][5] = 0xfa
+        else: #item
+            maps.map[mapID].npcs[npcIndex][4] = value
+            maps.map[mapID].npcs[npcIndex][5] = 0xf9
+            if value == 0xff:
+                maps.map[mapID].npcs[npcIndex][2]+=0x40
+    def _placeInScript(bankID:int, scriptID:int, byteIndex: int, value:int, tType:int, scripts:ScriptManager):
+        if bankID == 3:
+            scripts.memo[scriptID][byteIndex] = 0x19
+            if tType == 1:
+                scripts.memo[scriptID][byteIndex+1] = 0x0a
+            else: 
+                scripts.memo[scriptID][byteIndex+1] = 0x0b
+            scripts.memo[scriptID][byteIndex+2] = value
         else:
-            match script[1]:
-                case 86: #skip trueeye script
+            scripts.main[scriptID][byteIndex] = 0x19
+            if tType == 1:
+                scripts.main[scriptID][byteIndex+1] = 0x0a
+            else: 
+                scripts.main[scriptID][byteIndex+1] = 0x0b
+            scripts.main[scriptID][byteIndex+2] = value
+
+    #determine items
+    items = []
+    magi = []
+    prismCounts = [0 for _ in range(16)]
+    if shuffleType in (1, 2, 5, 6):
+        items = GameData.TREASURES
+        random.shuffle(items)
+    else:
+        allItems = list(GameData.ITEMS.keys())
+        for _ in range(106):
+            items.append(random.choice(allItems))
+    if shuffleType < 5:
+        for m, c in GameData.MAGI.items():
+            for _ in range(c):
+                magi.append(m)
+        random.shuffle(magi)
+    else:
+        magiTypes = list(GameData.MAGI.keys())
+        for _ in range(76):
+            magi.append(random.choice(magiTypes))
+    keyListShuffled = []
+    keyListPrioritized = []
+    for k, v in worlds.locations.items():
+        if v.lType.value in (2,4,6,8) or k == "Final Dungeon, WarMach Chest":
+            match k:
+                case "Char 2's Parent":
+                    _char2Parent(scripts)
+                case "Undersea Volcano, Exit TrueEye":
+                     #TrueEye stays put, currently not in dict
+                    _placeInChest(v.data[0], v.data[1], 0x0a, 1, maps)
+                    prismCounts[v.pType.value]+=1
+                case "Leon's Theft":
+                    scripts.replaceScript(0, 54, FFL2R_manager_base.GamePrep.leonsText(magi[0]))
+                    _placeInScript(v.data[0], v.data[1], v.data[2], magi[0], 1, scripts)
+                    magi.pop(0)
+                    prismCounts[v.pType.value]+=1
+                case "Hermit Crab Drop" | "Giant Town, Micron Potion Location" | "Race - Watcher (Adamant)" | "Race - Watcher (Tortoise)" | "Race - Watcher (Lamia)":
                     pass
-                case 420: #leon's return cutscene
-                    leonsMagi = magiList[0] #leon's theft
-                    scripts.replaceScript(0, 54, FFL2R_manager_base.GamePrep.leonsText(leonsMagi))
-                    _newMagi(scripts, magiList, script[1], script[2]+2)
-                case 457|458|459:
-                    raceMagi.append(magiList[0])
-                    _newMagi(scripts, magiList, script[1], script[2]+2)
-                case 460:
-                    if script[2] != 24:#position 24 signifies the first magi reward and should avoid using racemagi
-                        magiList.insert(0, raceMagi[0])
-                        raceMagi.pop(0)
-                    _newMagi(scripts, magiList, script[1], script[2]+2)
+                case "Final Dungeon, WarMach Chest":
+                     _placeInScript(v.data[0], v.data[1], v.data[2], magi[0], 1, scripts)
+                     magi.pop(0)
+                     prismCounts[v.pType.value]+=1
                 case _:
-                    _newMagi(scripts, magiList, script[1], script[2]+2)
+                    keyListPrioritized.append(k)
+        else:
+            match k:
+               case k if 'Final Dungeon' in k:
+                     _placeInChest(v.data[0], v.data[1], items[0], 0, maps)
+                     items.pop(0)
+               case _:
+                    keyListShuffled.append(k)
+    random.shuffle(keyListShuffled)
+    keyList = keyListPrioritized + keyListShuffled
+    if shuffleType % 2 == 0:
+        activeList = magi
+        listBool = 1
+        for k in keyList:
+            if not activeList:
+                activeList = items
+                listBool = 0
+            locData = worlds.locations[k]
+            if locData.lType.value <= 4:
+                _placeInChest(locData.data[0], locData.data[1], activeList[0], listBool, maps)
+            else:
+                _placeInScript(locData.data[0], locData.data[1], locData.data[2], activeList[0], listBool, scripts)
+                s=""
+                match k:
+                    case "Race - Adamant":
+                        s = "Race - Watcher (Adamant)"
+                    case "Race - Tortoise":
+                        s = "Race - Watcher (Tortoise)"
+                    case "Race - Lamia":
+                        s = "Race - Watcher (Lamia)"
+                if s:
+                    _placeInScript(worlds.locations[s].data[0], worlds.locations[s].data[1], worlds.locations[s].data[2], activeList[0], listBool, scripts)                        
+            if listBool == 1:
+                prismCounts[locData.pType.value]+=1
+            activeList.pop(0)
+    else:
+        for k in keyList:
+            locData = worlds.locations[k]
+            match locData.lType.value:
+                case 0 | 1:
+                    _placeInChest(locData.data[0], locData.data[1], items[0], 0, maps)
+                    items.pop(0)
+                case 5:
+                    _placeInScript(locData.data[0], locData.data[1], locData.data[2], items[0], 0, scripts)
+                    items.pop(0)
+                case 3:
+                    _placeInChest(locData.data[0], locData.data[1], magi[0], 1, maps)
+                    prismCounts[locData.pType.value]+=1
+                    magi.pop(0)
+                case 7 | 8:
+                    _placeInScript(locData.data[0], locData.data[1], locData.data[2], magi[0], 1, scripts)
+                    prismCounts[locData.pType.value]+=1
+                    s=""
+                    match k:
+                        case "Race - Adamant":
+                            s = "Race - Watcher (Adamant)"
+                        case "Race - Tortoise":
+                            s = "Race - Watcher (Tortoise)"
+                        case "Race - Lamia":
+                            s = "Race - Watcher (Lamia)"
+                    if s:
+                        _placeInScript(worlds.locations[s].data[0], worlds.locations[s].data[1], worlds.locations[s].data[2], magi[0], 1, scripts)                        
+                    magi.pop(0)
+                case _:
+                    print(f"{k} - err")
+    for x in range (0, len(prismCounts)):
+        romData[worlds.PRISMADDR+x] = prismCounts[x]
+    #account for the NPC removal
+    if DEBUG == True:
+        for k, v in worlds.locations.items():
+            if "Ruins of the Ancient Gods, Floor 4" in k:
+                v.data[1]-=1
+
 
 def shopRando(shops:ShopManager, tiers:list):
     def _mixTier(tierData:list)->list:
@@ -287,13 +430,13 @@ def worldShuffle(romData:mmap, maps:MapManager, scripts:ScriptManager, worlds:Wo
         maps.map[finalStore[1][1]].npcs[finalStore[1][2]][0] = 0x10
         maps.map[finalStore[1][1]].npcs[finalStore[1][2]][1] = 0x1f
         if worldType == 3:
-            for world in worlds.world.values():
+            for k, v in worlds.world.items():
                 for x in finalStore:
-                    if x[0] == world.index:
+                    if x[0] == v.index:
                         maps.map[x[1]].npcs[x[2]][0] = 0x00
                         maps.map[x[1]].npcs[x[2]][1] = 0x0F
-                if world.scriptTeleportUnlockByte:
-                    scripts.main[world.scriptTeleportUnlockByte[0]][world.scriptTeleportUnlockByte[1]+2] = 0x0D
+                if v.scriptTeleportUnlockByte:
+                    scripts.main[v.scriptTeleportUnlockByte[0]][v.scriptTeleportUnlockByte[1]+2] = 0x0D
     newWorldOrder = list(worlds.world.values())
     if worldType == 2:
         for world in newWorldOrder:
@@ -350,5 +493,6 @@ if __name__ == "__main__":
     parser.add_argument('-e', '--encounter_rate', type=int)
     parser.add_argument('-g', '--gold', type=int)
     parser.add_argument('-w', '--world', type=int)
+    parser.add_argument('-sh', '--shuffle', type=int)
     args = parser.parse_args()
-    main(False, None, rom_path = args.rom_path, seed=args.seed, encounterRate=args.encounter_rate, goldDrops=args.gold, worldType=args.world)
+    main(False, None, rom_path = args.rom_path, seed=args.seed, encounterRate=args.encounter_rate, goldDrops=args.gold, worldType=args.world, shuffleType=args.shuffle)

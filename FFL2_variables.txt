@@ -382,4 +382,4 @@ States:
 1 - Fastest Dragon, 4 encounters
 2 - Fast Dragon, 3 encounters
 3 - Slow Dragon, 2 encounters
-4 - Slowest Dragonm 1 encounter
+4 - Slowest Dragon 1 encounter
