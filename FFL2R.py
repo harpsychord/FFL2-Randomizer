@@ -1,6 +1,7 @@
 import random
 import argparse
 import mmap
+import os
 
 import FFL2R_asm
 import FFL2R_manager_base
@@ -66,6 +67,9 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
         
     if shuffleType < 1 or worldType > 8:
         raise Exception("Invalid Shuffle Selection.")
+    
+    if not ('DAD_PEGASUS' in os.environ.keys()):
+        os.environ['DAD_PEGASUS'] = "0"
 
     FFL2R_asm.Fixes.missingTrigger(romData)
     FFL2R_asm.Fixes.magiFix(romData)
@@ -258,11 +262,22 @@ def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, m
         magiTypes = list(GameData.MAGI.keys())
         for _ in range(76):
             magi.append(random.choice(magiTypes))
+    if os.environ['DAD_PEGASUS'] == "1": # Feature flag.
+        magi.remove(0x0c)
+        magi.append(0x0c) # Move Pegasus magi to last.
     keyListShuffled = []
     keyListPrioritized = []
     for k, v in worlds.locations.items():
         if v.lType.value in (2,4,6,8) or k == "Final Dungeon, WarMach Chest":
             match k:
+                case "Opening Cutscene":
+                    if os.environ['DAD_PEGASUS'] == "1": # Feature flag.
+                        magi[magi.index(0x0c)] = magi[0] # Swap the magi he was originally going to give us with the Pegasus magi.
+                        magi[0] = 0x0c
+                    
+                    #Put the magi in the box.
+                    _placeInScript(v.data[0], v.data[1], v.data[2], magi[0], 1, scripts)
+                    magi.pop(0)
                 case "Char 2's Parent":
                     _char2Parent(scripts)
                 case "Undersea Volcano, Exit TrueEye":
