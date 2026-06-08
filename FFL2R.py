@@ -193,12 +193,18 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
         case 6: shuffleMode = "Shuffle Treasures, Random Magi, Mix"
         case 7: shuffleMode = "Random Treasures, Random Magi, Don't Mix"
         case 8: shuffleMode = "Random Treasures, Random Magi, Mix"
+    dadMode = ""
+    if dadMagi != 0x00:
+        dadMode = GameData.MAGIVALUES.get(dadMagi)
+    else:
+        dadMode = "Random"
     print(f"""        Final Fantasy Legend 2 Randomizer Settings:
         Seed is: {str(gameSeed)}
         Encounter rate adjustment is: {str(encounterRate)}%
         Gold adjustment is: {str(goldDrops)}%
         World type is: {worldMode}
-        Treasure Distribution is: {shuffleMode}""")
+        Treasure Distribution is: {shuffleMode}
+        Magi that Dad gives you is: {dadMode}""")
     if fromWeb == True:
         return romData, gameSeed
     else:
