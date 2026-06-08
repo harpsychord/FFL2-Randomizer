@@ -68,8 +68,24 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     if shuffleType < 1 or worldType > 8:
         raise Exception("Invalid Shuffle Selection.")
     
-    if not ('DAD_PEGASUS' in os.environ.keys()):
-        os.environ['DAD_PEGASUS'] = "0"
+    # List is in game data order
+    dadMagiType = int(input("""Choose what magi Dad gives you at the beginning:
+    1 = Masmune
+    2 = Aegis
+    3 = Heart
+    4 = Pegasus
+    5 = Prism
+    6 = Random                 
+    >>>"""))
+
+    dadMagi:int
+    match dadMagiType:
+        case 1: dadMagi = 0x08
+        case 2: dadMagi = 0x09
+        case 3: dadMagi = 0x0b
+        case 4: dadMagi = 0x0c
+        case 5: dadMagi = 0x0d
+        case 6: dadMagi = 0x00
 
     FFL2R_asm.Fixes.missingTrigger(romData)
     FFL2R_asm.Fixes.magiFix(romData)
@@ -107,7 +123,7 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
 
     FFL2R_manager_base.ScriptedQOL.newNPCHelpers(scripts, maps)
 
-    randomization(worlds, shuffleType, scripts, maps, romData)
+    randomization(worlds, shuffleType, scripts, maps, romData, dadMagi)
     shopRando(shops, GameData.shopTiers)
     worldShuffle(romData, maps, scripts, worlds, worldType)
 
@@ -212,7 +228,7 @@ def encounterRateAdjustment(maps:MapManager, rate:int):
             if v.encounterRate == 0:
                 v.encounterRate = 1
 
-def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, maps:MapManager, romData:mmap):
+def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, maps:MapManager, romData:mmap, dadMagi:int):
     def _char2Parent(scripts:ScriptManager):
         startGift = random.choice(list(GameData.ITEMS.keys()))
         scripts.main[275][26] = startGift
@@ -262,20 +278,20 @@ def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, m
         magiTypes = list(GameData.MAGI.keys())
         for _ in range(76):
             magi.append(random.choice(magiTypes))
-    if os.environ['DAD_PEGASUS'] == "1": # Feature flag.
-        magi.remove(0x0c)
-        magi.append(0x0c) # Move Pegasus magi to last.
+    if dadMagi != 0x00: # If the selected magi for Dad is Random, skip.
+        magi.remove(dadMagi) # Remove Dad's magi from the list.
+        magi.append(dadMagi) # Move Dad's new magi to last to avoid having it allocated early.
     keyListShuffled = []
     keyListPrioritized = []
     for k, v in worlds.locations.items():
         if v.lType.value in (2,4,6,8) or k == "Final Dungeon, WarMach Chest":
             match k:
                 case "Opening Cutscene":
-                    if os.environ['DAD_PEGASUS'] == "1": # Feature flag.
-                        magi[magi.index(0x0c)] = magi[0] # Swap the magi he was originally going to give us with the Pegasus magi.
-                        magi[0] = 0x0c
+                    if dadMagi != 0x00: # Skip magi swap if random.
+                        magi[magi.index(dadMagi)] = magi[0] # Swap the magi he was originally going to give us with the new magi.
+                        magi[0] = dadMagi
                     
-                    #Put the magi in the box.
+                    #Put the magi in the script for the opening cutscene.
                     _placeInScript(v.data[0], v.data[1], v.data[2], magi[0], 1, scripts)
                     magi.pop(0)
                 case "Char 2's Parent":
