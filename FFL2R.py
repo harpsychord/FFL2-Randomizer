@@ -69,7 +69,7 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
         raise Exception("Invalid Shuffle Selection.")
     
     # List is in game data order
-    dadMagiType = int(input("""Choose what magi Dad gives you at the beginning:
+    dadMagiType = int(input("""Please choose what magi Dad gives you at the beginning:
     1 = Masmune
     2 = Aegis
     3 = Heart
