@@ -20,7 +20,7 @@ VERSION = 3.1
 DEBUG = False
 
 def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None, encounterRate:int|None, goldDrops:int|None, 
-         worldType:int|None, shuffleType:int|None)->tuple:
+         worldType:int|None, shuffleType:int|None, dadMagiType:int|None)->tuple:
     if not fromWeb:
         if not rom_path:
             gameFile = str(input("First, please path to the FFL2 rom. \n>>"))
@@ -67,16 +67,20 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
         
     if shuffleType < 1 or worldType > 8:
         raise Exception("Invalid Shuffle Selection.")
-    
-    # List is in game data order
-    dadMagiType = int(input("""Please choose what magi Dad gives you at the beginning:
-    1 = Masmune
-    2 = Aegis
-    3 = Heart
-    4 = Pegasus
-    5 = Prism
-    6 = Random                 
-    >>>"""))
+
+    while (not dadMagiType or dadMagiType not in range(1,7)):
+        # List is in game data order
+        dadMagiType = int(input("""Please choose what magi Dad gives you at the beginning:
+        1 = Masmune
+        2 = Aegis
+        3 = Heart
+        4 = Pegasus
+        5 = Prism
+        6 = Random                                 
+        >>>"""))
+        
+        if dadMagiType not in range(1,7):
+            print("Invalid magi option!")
 
     dadMagi:int
     match dadMagiType:
@@ -531,5 +535,6 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gold', type=int)
     parser.add_argument('-w', '--world', type=int)
     parser.add_argument('-sh', '--shuffle', type=int)
+    parser.add_argument('-d', '--dad_magi', type=int)
     args = parser.parse_args()
-    main(False, None, rom_path = args.rom_path, seed=args.seed, encounterRate=args.encounter_rate, goldDrops=args.gold, worldType=args.world, shuffleType=args.shuffle)
+    main(False, None, rom_path = args.rom_path, seed=args.seed, encounterRate=args.encounter_rate, goldDrops=args.gold, worldType=args.world, shuffleType=args.shuffle, dadMagiType=args.dad_magi)
