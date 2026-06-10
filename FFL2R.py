@@ -1,7 +1,6 @@
 import random
 import argparse
 import mmap
-import os
 
 import FFL2R_asm
 import FFL2R_manager_base
