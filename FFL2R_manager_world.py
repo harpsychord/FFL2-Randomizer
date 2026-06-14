@@ -58,7 +58,7 @@ class WorldManager:
 
 
         self.locations = {
-            "Opening Cutscene"                                      : self.Location(self.LocationType.SCRIPT_MAGI, [0, 1, 172], self.PrismIndex.FIRST_WORLD),
+            "Opening Cutscene"                                      : self.Location(self.LocationType.NPC_MAGI_SPECIAL, [0, 1, 172], self.PrismIndex.FIRST_WORLD),
             "Char 2's Parent"                                       : self.Location(self.LocationType.SCRIPT_ITEM_SPECIAL, [0, 275, 39], self.PrismIndex.FIRST_WORLD),
             "First Cave, First Platform, Left"                      : self.Location(self.LocationType.NPC_ITEM, [5, 2], self.PrismIndex.FIRST_WORLD),
             "First Cave, First Platform, Right"                     : self.Location(self.LocationType.NPC_ITEM, [5, 3], self.PrismIndex.FIRST_WORLD),

@@ -15,11 +15,11 @@ from FFL2R_manager_economy import GoldManager
 from FFL2R_manager_economy import ItemManager
 from FFL2R_manager_world import WorldManager
 
-VERSION = 3.1
+VERSION = 3.2
 DEBUG = False
 
 def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None, encounterRate:int|None, goldDrops:int|None, 
-         worldType:int|None, shuffleType:int|None)->tuple:
+         worldType:int|None, shuffleType:int|None, dadMagiType:int|None)->tuple:
     if not fromWeb:
         if not rom_path:
             gameFile = str(input("First, please path to the FFL2 rom. \n>>"))
@@ -67,6 +67,29 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     if shuffleType < 1 or worldType > 8:
         raise Exception("Invalid Shuffle Selection.")
 
+    # List is in game data order
+    if not (dadMagiType):
+        dadMagiType = int(input("""Please choose what Magi Dad gives you at the beginning:
+        1 = Masmune
+        2 = Aegis
+        3 = Heart
+        4 = Pegasus
+        5 = Prism
+        6 = Random                                 
+        >>>"""))
+        
+    if dadMagiType not in range(1,7):
+        raise Exception("Invalid Dad Magi Selection.")
+
+    dadMagi:int
+    match dadMagiType:
+        case 1: dadMagi = 0x08
+        case 2: dadMagi = 0x09
+        case 3: dadMagi = 0x0b
+        case 4: dadMagi = 0x0c
+        case 5: dadMagi = 0x0d
+        case 6: dadMagi = 0x00
+
     FFL2R_asm.Fixes.missingTrigger(romData)
     FFL2R_asm.Fixes.magiFix(romData)
     FFL2R_asm.Fixes.mutantStr(romData)
@@ -103,7 +126,7 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
 
     FFL2R_manager_base.ScriptedQOL.newNPCHelpers(scripts, maps)
 
-    randomization(worlds, shuffleType, scripts, maps, romData)
+    randomization(worlds, shuffleType, scripts, maps, romData, dadMagi)
     shopRando(shops, GameData.shopTiers)
     worldShuffle(romData, maps, scripts, worlds, worldType)
 
@@ -173,12 +196,18 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
         case 6: shuffleMode = "Shuffle Treasures, Random Magi, Mix"
         case 7: shuffleMode = "Random Treasures, Random Magi, Don't Mix"
         case 8: shuffleMode = "Random Treasures, Random Magi, Mix"
+    dadMode = ""
+    if dadMagi != 0x00:
+        dadMode = GameData.MAGIVALUES.get(dadMagi)
+    else:
+        dadMode = "Random"
     print(f"""        Final Fantasy Legend 2 Randomizer Settings:
         Seed is: {str(gameSeed)}
         Encounter rate adjustment is: {str(encounterRate)}%
         Gold adjustment is: {str(goldDrops)}%
         World type is: {worldMode}
-        Treasure Distribution is: {shuffleMode}""")
+        Treasure Distribution is: {shuffleMode}
+        Magi that Dad gives you is: {dadMode}""")
     if fromWeb == True:
         return romData, gameSeed
     else:
@@ -208,7 +237,7 @@ def encounterRateAdjustment(maps:MapManager, rate:int):
             if v.encounterRate == 0:
                 v.encounterRate = 1
 
-def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, maps:MapManager, romData:mmap):
+def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, maps:MapManager, romData:mmap, dadMagi:int):
     def _char2Parent(scripts:ScriptManager):
         startGift = random.choice(list(GameData.ITEMS.keys()))
         scripts.main[275][26] = startGift
@@ -258,11 +287,23 @@ def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, m
         magiTypes = list(GameData.MAGI.keys())
         for _ in range(76):
             magi.append(random.choice(magiTypes))
+    if dadMagi != 0x00: # If the selected magi for Dad is Random, skip.
+        magi.remove(dadMagi) # Remove Dad's magi from the list.
+        magi.append(dadMagi) # Move Dad's new magi to last to avoid having it allocated early.
     keyListShuffled = []
     keyListPrioritized = []
     for k, v in worlds.locations.items():
         if v.lType.value in (2,4,6,8) or k == "Final Dungeon, WarMach Chest":
             match k:
+                case "Opening Cutscene":
+                    if dadMagi != 0x00: # Skip magi swap if random.
+                        magi[magi.index(dadMagi)] = magi[0] # Swap the magi he was originally going to give us with the new magi.
+                        magi[0] = dadMagi
+                    
+                    #Put the magi in the script for the opening cutscene.
+                    _placeInScript(v.data[0], v.data[1], v.data[2], magi[0], 1, scripts)
+                    magi.pop(0)
+                    prismCounts[v.pType.value]+=1
                 case "Char 2's Parent":
                     _char2Parent(scripts)
                 case "Undersea Volcano, Exit TrueEye":
@@ -494,5 +535,6 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gold', type=int)
     parser.add_argument('-w', '--world', type=int)
     parser.add_argument('-sh', '--shuffle', type=int)
+    parser.add_argument('-d', '--dad_magi', type=int)
     args = parser.parse_args()
-    main(False, None, rom_path = args.rom_path, seed=args.seed, encounterRate=args.encounter_rate, goldDrops=args.gold, worldType=args.world, shuffleType=args.shuffle)
+    main(False, None, rom_path = args.rom_path, seed=args.seed, encounterRate=args.encounter_rate, goldDrops=args.gold, worldType=args.world, shuffleType=args.shuffle, dadMagiType=args.dad_magi)
