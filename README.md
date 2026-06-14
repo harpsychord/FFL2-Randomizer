@@ -17,6 +17,7 @@
   - Better stat growth.
   - NPCs added to help access one-time or limited-time areas.
   - Mutants no longer learn weaknesses, instead learn elemental AoEs.
+  - Can choose with MAGI Dad gives you during the opening cutscene.
   - Game bug fixes:
     - Gold/Meat/Item drops now calculate correctly.
     - Elemental MAGI behaves appropriately.
