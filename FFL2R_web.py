@@ -24,7 +24,8 @@ def process():
         error_div = web.page["error"]
         error_div.innerText = ""
         results = FFL2R.main(True, rom, None, int(web.page["seed"].value), int(web.page["encounterRate"].value), 
-                             int(web.page["goldDrops"].value), int(web.page["worldType"].value), int(web.page["shuffleType"].value))
+                             int(web.page["goldDrops"].value), int(web.page["worldType"].value), int(web.page["shuffleType"].value), 
+                             int(web.page["dadMagi"].value))
         js_array = Uint8Array.new(len(results[0]))
         js_array.assign(results[0])
         f = File.new([js_array], "ffl2r.gb")
