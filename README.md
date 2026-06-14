@@ -24,9 +24,8 @@
     - Mutant stat growth behaves as expected.
     - Dooring/Pegasus/Teleporting during the race will now force a dismount.
 
-## Version 3.1.0 (5/31/2026):
-- Adjustable treasure randomization added.
-- Fixed an issue where talking to Leon in Exiled Town would graphically glitch the player.
+## Version 3.2.0 (6/14/2026):
+- Added functionality to be able to choose MAGI at the start.
 
 ## How to:
 - Download the Python scripts (and install Python if you don't have it).
