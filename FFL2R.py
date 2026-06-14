@@ -67,9 +67,9 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
     if shuffleType < 1 or worldType > 8:
         raise Exception("Invalid Shuffle Selection.")
 
-    while (not dadMagiType or dadMagiType not in range(1,7)):
-        # List is in game data order
-        dadMagiType = int(input("""Please choose what magi Dad gives you at the beginning:
+    # List is in game data order
+    if not (dadMagiType):
+        dadMagiType = int(input("""Please choose what Magi Dad gives you at the beginning:
         1 = Masmune
         2 = Aegis
         3 = Heart
@@ -78,8 +78,8 @@ def main(fromWeb:bool, romData:mmap.mmap|None, rom_path:str|None, seed:int|None,
         6 = Random                                 
         >>>"""))
         
-        if dadMagiType not in range(1,7):
-            print("Invalid magi option!")
+    if dadMagiType not in range(1,7):
+        raise Exception("Invalid Dad Magi Selection.")
 
     dadMagi:int
     match dadMagiType:
@@ -303,6 +303,7 @@ def randomization(worlds:WorldManager, shuffleType:int, scripts:ScriptManager, m
                     #Put the magi in the script for the opening cutscene.
                     _placeInScript(v.data[0], v.data[1], v.data[2], magi[0], 1, scripts)
                     magi.pop(0)
+                    prismCounts[v.pType.value]+=1
                 case "Char 2's Parent":
                     _char2Parent(scripts)
                 case "Undersea Volcano, Exit TrueEye":
